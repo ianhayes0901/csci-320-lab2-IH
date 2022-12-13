@@ -35,7 +35,7 @@ void *valid_row(void* parameters)
     for(int i = 0; i< 9; i++)
     {   
         int target = sudoku_board[row][i];
-        if (validation_array[target - 1]==1)
+        if (target > 9 || target < 1 || validation_array[target - 1]==1)
         {
             printf("[Row] Problem at Row: %d Column: %d\n", row+1,i+1);
             pthread_exit(NULL);
@@ -60,7 +60,7 @@ void *valid_col(void* parameters)
     for(int i = 0; i< 9; i++)
     {   
         int target = sudoku_board[i][col];
-        if (validation_array[target - 1]==1)
+        if (target > 9 || target < 1 || validation_array[target - 1]==1)
         {
             printf("[Column] Problem at Row: %d Column: %d\n", i+1,col+1);
             pthread_exit(NULL);
@@ -85,7 +85,7 @@ void *valid_3x3(void* parameters)
         for(int j = col; j<col + 3; j++)
         {
             int target = sudoku_board[i][j];
-            if (validation_array[target - 1]==1)
+            if (target > 9 || target < 1 || validation_array[target - 1]==1)
             {
                 printf("[3x3] Problem at Row: %d Column: %d\n", i+1,j+1);
                 pthread_exit(NULL);
