@@ -13,13 +13,19 @@ int** read_board_from_file(char* filename){
     }
 
     fp = fopen(filename,"r");
-    for(int i = 0; i < 9; i++) {
-        for(int j = 0; j < 9; j++) {
+    for(int i = 0; i < ROW_SIZE; i++) {
+        for(int j = 0; j < COL_SIZE; j++) {
             fscanf(fp, "%d%*c", &sudoku_board[i][j]);
         }
     }   
 
-
+    for(int i = 0; i<ROW_SIZE; i++){
+        for(int j = 0; j<COL_SIZE; j++)
+        {
+            printf("%d ", sudoku_board[i][j]);
+        }
+        printf("\n");
+    }
 
     fclose(fp);
     return sudoku_board;
@@ -99,6 +105,8 @@ void *valid_3x3(void* parameters)
     pthread_exit(NULL);
 
 }
+
+
 
 int is_board_valid(){
     pthread_t* tid;  /* the thread identifiers */
