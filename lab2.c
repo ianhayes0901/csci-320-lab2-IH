@@ -6,8 +6,7 @@
 
 int** read_board_from_file(char* filename){
     FILE *fp = NULL;
-    int num;
-    int** sudoku_board = (int**)malloc(sizeof(int*)*ROW_SIZE);
+    sudoku_board = (int**)malloc(sizeof(int*)*ROW_SIZE);
     for(int row = 0; row < ROW_SIZE; row++){
 	    sudoku_board[row] = (int*)malloc(sizeof(int)*COL_SIZE);
     }
@@ -31,61 +30,59 @@ int** read_board_from_file(char* filename){
     return sudoku_board;
 }
 
-void *valid_row(void* parameters)
+void *valid_rowcol(void* parameters)
 {
-    param_struct *p = (param_struct*) parameters;
+    param_struct *prams = (param_struct*) parameters;
     int validation_array[9] = {0};
-    int row = p -> starting_row;
-    int col = p -> starting_col;
+    int row = prams -> starting_row;
+    int col = prams -> starting_col;
+    int endrow = prams ->ending_row;
+    int endcol = prams ->ending_col;
 
-    for(int i = 0; i< 9; i++)
-    {   
-        int target = sudoku_board[row][i];
-        if (target > 9 || target < 1 || validation_array[target - 1]==1)
-        {
-            printf("[Row] Problem at Row: %d Column: %d\n", row+1,i+1);
-            pthread_exit(NULL);
-        }
-        else{
-            validation_array[target - 1] = 1;
-        }
-    } 
-
-    worker_validation[9+row] = 1;
-    pthread_exit(NULL);
-   
-}
-
-void *valid_col(void* parameters)
-{
-    param_struct *p = (param_struct*) parameters;
-    int validation_array[9] = {0};
-    int row = p -> starting_row;
-    int col = p -> starting_col;
-
-    for(int i = 0; i< 9; i++)
-    {   
-        int target = sudoku_board[i][col];
-        if (target > 9 || target < 1 || validation_array[target - 1]==1)
-        {
-            printf("[Column] Problem at Row: %d Column: %d\n", i+1,col+1);
-            pthread_exit(NULL);
-        }
-        else{
-            validation_array[target - 1] = 1;
-        }
+    if(endrow == row)
+    {
+        for(int i = 0; i< COL_SIZE; i++)
+        {   
+            int target = sudoku_board[i][col];
+            if (target > 9 || target < 1 || validation_array[target - 1]==1)
+            {
+                printf("[Column] Problem at Row: %d Column: %d\n", i+1,col+1);
+                pthread_exit(NULL);
+            }
+            else{
+                validation_array[target - 1] = 1;
+        }   
     } 
 
     worker_validation[18+col] = 1;
+    }
+
+    if(endcol == col)
+    {
+        for(int i = 0; i< ROW_SIZE; i++)
+        {   
+            int target = sudoku_board[row][i];
+            if (target > 9 || target < 1 || validation_array[target - 1]==1)
+            {
+                printf("[Row] Problem at Row: %d Column: %d\n", row+1,i+1);
+                pthread_exit(NULL);
+            }
+            else{
+                validation_array[target - 1] = 1;
+            }
+        } 
+
+        worker_validation[9+row] = 1;
+    }
     pthread_exit(NULL);
 }
 
 void *valid_3x3(void* parameters)
 {
-    param_struct *p = (param_struct*) parameters;
+    param_struct *prams = (param_struct*) parameters;
     int validation_array[9] = {0};
-    int row = p -> starting_row;
-    int col = p -> starting_col;
+    int row = prams -> starting_row;
+    int col = prams -> starting_col;
 
     for(int i = row; i < row + 3; i++){
         for(int j = col; j<col + 3; j++)
@@ -130,13 +127,17 @@ int is_board_valid(){
                 param_struct *workerColumn = (param_struct*) malloc(sizeof(param_struct));
                 workerColumn->starting_row = i;
                 workerColumn->starting_col = j;
-                pthread_create(&tid[threadIndex++], NULL, valid_col,workerColumn);
+                workerColumn->ending_row = i;
+                workerColumn->ending_col = j+1;
+                pthread_create(&tid[threadIndex++], NULL, valid_rowcol,workerColumn);
             }
             if(j==0){
                 param_struct *workerRow = (param_struct*) malloc(sizeof(param_struct));
                 workerRow->starting_row = i;
                 workerRow->starting_col = j;
-                pthread_create(&tid[threadIndex++], NULL, valid_row, workerRow);
+                workerRow->ending_col = j;
+                workerRow->ending_row = i+1;
+                pthread_create(&tid[threadIndex++], NULL, valid_rowcol, workerRow);
             }
             
         }
