@@ -30,7 +30,7 @@ int** read_board_from_file(char* filename){
     return sudoku_board;
 }
 
-void *valid_rowcol(void* parameters)
+void *valid_element(void* parameters)
 {
     param_struct *prams = (param_struct*) parameters;
     int validation_array[9] = {0};
@@ -57,7 +57,7 @@ void *valid_rowcol(void* parameters)
     worker_validation[18+col] = 1;
     }
 
-    if(endcol == col)
+    else if(endcol == col)
     {
         for(int i = 0; i< ROW_SIZE; i++)
         {   
@@ -74,36 +74,28 @@ void *valid_rowcol(void* parameters)
 
         worker_validation[9+row] = 1;
     }
-    pthread_exit(NULL);
-}
 
-void *valid_3x3(void* parameters)
-{
-    param_struct *prams = (param_struct*) parameters;
-    int validation_array[9] = {0};
-    int row = prams -> starting_row;
-    int col = prams -> starting_col;
-
-    for(int i = row; i < row + 3; i++){
-        for(int j = col; j<col + 3; j++)
-        {
+    else
+    {
+        for(int i = row; i < row + 3; i++){
+            for(int j = col; j<col + 3; j++)
+            {
             int target = sudoku_board[i][j];
             if (target > 9 || target < 1 || validation_array[target - 1]==1)
             {
                 printf("[3x3] Problem at Row: %d Column: %d\n", i+1,j+1);
                 pthread_exit(NULL);
             }
-            else{
+            else
+            {
                 validation_array[target-1] = 1;
             }
         }
     }
     worker_validation[row+col/3]=1;
+    }
     pthread_exit(NULL);
-
 }
-
-
 
 int is_board_valid(){
     pthread_t* tid;  /* the thread identifiers */
@@ -121,7 +113,9 @@ int is_board_valid(){
                 param_struct *worker3x3 = (param_struct*) malloc(sizeof(param_struct));
                 worker3x3->starting_row = i;
                 worker3x3->starting_col = j;
-                pthread_create(&tid[threadIndex++], NULL, valid_3x3, worker3x3);
+                worker3x3->ending_row = i+1;
+                worker3x3->ending_col = j+1;
+                pthread_create(&tid[threadIndex++], NULL, valid_element, worker3x3);
             }
             if(i==0){
                 param_struct *workerColumn = (param_struct*) malloc(sizeof(param_struct));
@@ -129,7 +123,7 @@ int is_board_valid(){
                 workerColumn->starting_col = j;
                 workerColumn->ending_row = i;
                 workerColumn->ending_col = j+1;
-                pthread_create(&tid[threadIndex++], NULL, valid_rowcol,workerColumn);
+                pthread_create(&tid[threadIndex++], NULL, valid_element,workerColumn);
             }
             if(j==0){
                 param_struct *workerRow = (param_struct*) malloc(sizeof(param_struct));
@@ -137,7 +131,7 @@ int is_board_valid(){
                 workerRow->starting_col = j;
                 workerRow->ending_col = j;
                 workerRow->ending_row = i+1;
-                pthread_create(&tid[threadIndex++], NULL, valid_rowcol, workerRow);
+                pthread_create(&tid[threadIndex++], NULL, valid_element, workerRow);
             }
             
         }
